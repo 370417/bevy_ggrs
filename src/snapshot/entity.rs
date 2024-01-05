@@ -39,7 +39,7 @@ impl EntitySnapshotPlugin {
 
         trace!("Snapshot {} entity(s)", snapshot.iter().count());
 
-        snapshots.push(frame.0, snapshot);
+        snapshots.push(frame.0, |_| snapshot);
     }
 
     pub fn load(

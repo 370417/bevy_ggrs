@@ -26,6 +26,12 @@ pub trait Strategy {
     fn update(target: &mut Self::Target, stored: &Self::Stored) {
         *target = Self::load(stored);
     }
+
+    /// Like update but reversed. Directly update a mutable reference to an existing
+    /// [`Stored`](`Strategy::Stored`) with the data from a provided [`Target`](`Strategy::Target`).
+    fn update_stored(stored: &mut Self::Stored, target: &Self::Target) {
+        *stored = Self::store(target);
+    }
 }
 
 /// A [`Strategy`] based on [`Copy`]
@@ -68,6 +74,11 @@ impl<T: Clone> Strategy for CloneStrategy<T> {
     #[inline(always)]
     fn update(target: &mut Self::Target, stored: &Self::Stored) {
         target.clone_from(stored);
+    }
+
+    #[inline(always)]
+    fn update_stored(stored: &mut Self::Target, target: &Self::Stored) {
+        stored.clone_from(target);
     }
 }
 

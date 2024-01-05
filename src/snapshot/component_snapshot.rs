@@ -69,7 +69,7 @@ where
             bevy::utils::get_short_name(std::any::type_name::<S::Target>())
         );
 
-        snapshots.push(frame.0, snapshot);
+        snapshots.push(frame.0, |_| snapshot);
     }
 
     pub fn load(

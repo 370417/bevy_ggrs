@@ -94,7 +94,11 @@ impl<For, As> GgrsSnapshots<For, As> {
 
     /// Push a new snapshot for the provided frame. If the frame is earlier than any
     /// currently stored snapshots, those snapshots will be discarded.
-    pub fn push(&mut self, frame: i32, snapshot: As) -> &mut Self {
+    /// A discarded snapshot will be passed to `store_snapshot` if applicable to allow its resources to be reused.
+    pub fn push<F>(&mut self, frame: i32, store_snapshot: F) -> &mut Self
+    where
+        F: FnOnce(Option<As>) -> As
+    {
         debug_assert_eq!(
             self.snapshots.len(),
             self.frames.len(),
@@ -119,13 +123,14 @@ impl<For, As> GgrsSnapshots<For, As> {
             }
         }
 
-        self.snapshots.push_front(snapshot);
-        self.frames.push_front(frame);
-
-        while self.snapshots.len() > self.depth {
-            self.snapshots.pop_back().unwrap();
-            self.frames.pop_back().unwrap();
+        let mut discarded_snapshot = None::<As>;
+        while self.snapshots.len() >= self.depth {
+            discarded_snapshot = self.snapshots.pop_back();
+            self.frames.pop_back();
         }
+
+        self.snapshots.push_front(store_snapshot(discarded_snapshot));
+        self.frames.push_front(frame);
 
         self
     }

@@ -60,7 +60,18 @@ where
         frame: Res<RollbackFrameCount>,
         resource: Option<Res<S::Target>>,
     ) {
-        snapshots.push(frame.0, resource.map(|res| S::store(res.as_ref())));
+        // Attempt at a small optimization: update_stored instead of storing directly
+        // if there is a discarded snapshot whose resources are available to reuse.
+        snapshots.push(frame.0, |old_stored| {
+            match (old_stored, resource) {
+                (Some(Some(mut stored)), Some(res)) => {
+                    S::update_stored(&mut stored, res.as_ref());
+                    Some(stored)
+                },
+                (None, Some(res)) => Some(S::store(res.as_ref())),
+                _ => None,
+            }
+        });
 
         trace!(
             "Snapshot {}",
